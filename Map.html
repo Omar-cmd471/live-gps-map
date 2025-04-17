@@ -4,55 +4,100 @@
   <title>Live GPS Map</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Leaflet.js CDN -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
   <style>
     #map {
       height: 100vh;
       width: 100%;
     }
+    #mapStyleSelector {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #999;
+    }
   </style>
 </head>
 <body>
-  <div id="map"></div>
 
-  <script>
-    const channelID = 2920529;
-    const readAPIKey = 'EO08IPO7PM9OCRGG';
-    const updateInterval = 60000; // 60 ثانية
+<select id="mapStyleSelector">
+  <option value="osm">OpenStreetMap</option>
+  <option value="esri">Esri Satellite</option>
+  <option value="toner">Toner (B/W)</option>
+  <option value="watercolor">Watercolor</option>
+</select>
 
-    let map = L.map('map').setView([33.3, 44.4], 17); // موقع مبدئي
+<div id="map"></div>
 
-    // إعداد الخريطة
-   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles © Esri'
-}).addTo(map);
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<script>
+  const channelID = 2920529;
+  const readAPIKey = 'EO08IPO7PM9OCRGG';
+  const url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?results=1&api_key=${readAPIKey}`;
 
-    let marker = L.marker([0, 0]).addTo(map);
+  const map = L.map('map').setView([33.3757, 44.4222], 17); // موقع ابتدائي
 
-    function fetchGPS() {
-      const url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=1`;
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          let feed = data.feeds[0];
-          if (feed) {
-            let lat = parseFloat(feed.field1);
-            let lng = parseFloat(feed.field2);
-            if (!isNaN(lat) && !isNaN(lng)) {
-              marker.setLatLng([lat, lng]);
-              map.setView([lat, lng], 18);
-            }
+  const baseLayers = {
+    'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }),
+    'esri': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles © Esri'
+    }),
+    'toner': L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
+      attribution: 'Map tiles by Stamen Design'
+    }),
+    'watercolor': L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg', {
+      attribution: 'Map tiles by Stamen Design'
+    }),
+  };
+
+  let currentLayer = baseLayers['osm'].addTo(map);
+
+  document.getElementById('mapStyleSelector').addEventListener('change', function () {
+    map.removeLayer(currentLayer);
+    currentLayer = baseLayers[this.value];
+    map.addLayer(currentLayer);
+  });
+
+  let marker;
+
+  async function fetchData() {
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      const feeds = data.feeds;
+
+      if (feeds && feeds.length > 0) {
+        const lastFeed = feeds[0];
+        const lat = parseFloat(lastFeed.field1);
+        const lng = parseFloat(lastFeed.field2);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          if (marker) {
+            marker.setLatLng([lat, lng]);
+          } else {
+            marker = L.marker([lat, lng]).addTo(map).bindPopup("Current Location").openPopup();
           }
-        })
-        .catch(err => console.error("Error fetching data:", err));
+          map.setView([lat, lng], 18);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
+  }
 
-    // تحديث مباشر
-    fetchGPS();
-    setInterval(fetchGPS, updateInterval);
-  </script>
+  fetchData();             // أول تحميل
+  setInterval(fetchData, 30000); // كل 30 ثانية
+</script>
+
 </body>
 </html>
