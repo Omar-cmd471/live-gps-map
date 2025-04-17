@@ -32,8 +32,6 @@
 <select id="mapStyleSelector">
   <option value="osm">OpenStreetMap</option>
   <option value="esri">Esri Satellite</option>
-  <option value="toner">Toner (B/W)</option>
-  <option value="watercolor">Watercolor</option>
 </select>
 
 <div id="map"></div>
@@ -46,7 +44,7 @@
   const readAPIKey = 'EO08IPO7PM9OCRGG';
   const url = `https://api.thingspeak.com/channels/${channelID}/feeds.json?results=1&api_key=${readAPIKey}`;
 
-  const map = L.map('map').setView([33.3757, 44.4222], 17); // موقع ابتدائي
+  const map = L.map('map').setView([33.3757, 44.4222], 19); // زوم أعلى
 
   const baseLayers = {
     'osm': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -54,12 +52,6 @@
     }),
     'esri': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles © Esri'
-    }),
-    'toner': L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png', {
-      attribution: 'Map tiles by Stamen Design'
-    }),
-    'watercolor': L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg', {
-      attribution: 'Map tiles by Stamen Design'
     }),
   };
 
@@ -90,7 +82,7 @@
           } else {
             marker = L.marker([lat, lng]).addTo(map).bindPopup("Current Location").openPopup();
           }
-          map.setView([lat, lng], 18);
+          map.setView([lat, lng], 19); // زوم محدث عند التغيير
         }
       }
     } catch (error) {
