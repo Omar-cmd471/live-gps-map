@@ -25,9 +25,10 @@
     let map = L.map('map').setView([33.3, 44.4], 17); // موقع مبدئي
 
     // إعداد الخريطة
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri'
+}).addTo(map);
+
 
     let marker = L.marker([0, 0]).addTo(map);
 
